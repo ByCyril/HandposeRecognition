@@ -17,7 +17,7 @@ final class GestureViewController: UIViewController, CameraViewDelegate, Gesture
     override func viewDidLoad() {
         super.viewDidLoad()
         cameraView = CameraView()
-        gestureRecognizer = GestureRecognizer(gesturesToRecognize: [.play, .pause])
+        gestureRecognizer = GestureRecognizer(PlayPauseGesture())
         gestureRecognizer?.delegate = self
         
         view = cameraView

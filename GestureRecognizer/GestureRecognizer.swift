@@ -18,11 +18,11 @@ final class GestureRecognizer: NSObject {
     weak var delegate: GestureRecognizerDelegate?
     
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
-    private var gesturesToRecognize: [GestureType]?
+    private var gesturesToRecognize: Gesture
     
-    init(gesturesToRecognize: [GestureType]) {
-        super.init()
+    init(_ gesturesToRecognize: Gesture) {
         self.gesturesToRecognize = gesturesToRecognize
+        super.init()
         handPoseRequest.maximumHandCount = 1
     }
     
@@ -44,13 +44,11 @@ final class GestureRecognizer: NSObject {
     }
     
     func handlePose(_ observation: VNRecognizedPointsObservation) {
-        if let gesture = PlayPauseGesture().process(with: observation) {
+        if let gesture = self.gesturesToRecognize.process(with: observation) {
             delegate?.recognizedGesture(gesture)
         } else {
             delegate?.recognizedGesture(.none)
         }
-        
     }
-    
     
 }

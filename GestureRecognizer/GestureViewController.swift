@@ -20,7 +20,6 @@ final class GestureViewController: UIViewController, CameraViewDelegate, Gesture
         gestureRecognizer = GestureRecognizer(PlayPauseGesture())
         gestureRecognizer?.delegate = self
         
-        view = cameraView
         cameraView?.delegate = self
         cameraView?.captureSession.startRunning()
         print("Ready")

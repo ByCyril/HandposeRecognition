@@ -46,9 +46,7 @@ final class GestureRecognizer: NSObject {
     func handlePose(_ observation: VNRecognizedPointsObservation) {
         if let gesture = self.gesturesToRecognize.process(with: observation) {
             delegate?.recognizedGesture(gesture)
-        } else {
-            delegate?.recognizedGesture(.none)
-        }
+        } 
     }
     
 }

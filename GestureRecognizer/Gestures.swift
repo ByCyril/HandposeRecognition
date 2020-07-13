@@ -9,22 +9,11 @@
 import UIKit
 import Vision
 
-struct ObservedGesture {
-    var confidenceLevel: Float
-    var gestureType: GestureType
-}
-
 enum GestureType: String {
-    case play
-    case pause
-    case none
+    case trigger
 }
 
 protocol Gesture: AnyObject {
     var confidenceLevel: VNConfidence { get set }
     func process(with observation: VNRecognizedPointsObservation) -> GestureType?
-}
-
-protocol GestureDelegate: AnyObject {
-    func gestureDidFinish(classification: GestureType)
 }

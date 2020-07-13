@@ -16,26 +16,35 @@ extension Float {
 
 final class PlayPauseGesture: Gesture {
     
-    internal var confidenceLevel: VNConfidence = 0.3
+    internal var confidenceLevel: VNConfidence = 0.7
     let lsm = LeastSquareMethod()
     
     func process(with observation: VNRecognizedPointsObservation) -> GestureType? {
         
         do {
-            let indexFinger = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyIndexFinger)
-            let middleFinger = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyMiddleFinger)
+            let first = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyIndexFinger)
+            let second = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyMiddleFinger)
+            let third = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyRingFinger)
+            let fourth = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyLittleFinger)
             
-            let indexFingerRecognizedPoints = [indexFinger[.handLandmarkKeyIndexTIP],
-                                               indexFinger[.handLandmarkKeyIndexDIP],
-                                               indexFinger[.handLandmarkKeyIndexPIP],
-                                               indexFinger[.handLandmarkKeyIndexMCP]]
+            let firstLineSlope = slope(first[.handLandmarkKeyIndexTIP], first[.handLandmarkKeyIndexMCP])
+            let secondLineSlope = slope(second[.handLandmarkKeyMiddleTIP], second[.handLandmarkKeyMiddleMCP])
+            let thirdLineSlope = slope(third[.handLandmarkKeyRingTIP], third[.handLandmarkKeyRingMCP])
+            let fourthLineSlope = slope(fourth[.handLandmarkKeyLittleTIP], fourth[.handLandmarkKeyLittleMCP])
             
-            let middleFingerRecognizedPoints = [middleFinger[.handLandmarkKeyMiddleTIP],
-                                                middleFinger[.handLandmarkKeyMiddleDIP],
-                                                middleFinger[.handLandmarkKeyMiddlePIP],
-                                                middleFinger[.handLandmarkKeyMiddleMCP]]
+            let slopes = [firstLineSlope, secondLineSlope, thirdLineSlope, fourthLineSlope]
             
-            return handlePoints(indexFingerRecognizedPoints, middleFingerRecognizedPoints)
+            var results = [Bool]()
+            
+            for case let slope? in slopes {
+                results.append(slope.between(-1.5, 1.5))
+            }
+            
+            if results.filter({ $0 == true }).count >= 2 {
+                return .trigger
+            }
+            
+            return nil
         } catch {
             print(error.localizedDescription)
         }
@@ -43,25 +52,13 @@ final class PlayPauseGesture: Gesture {
         return nil
     }
     
-    private func handlePoints(_ indexFingerRecognizedPoints: [VNRecognizedPoint?],_ middleFingerRecognizedPoints: [VNRecognizedPoint?]) -> GestureType {
-        var indexFingerPoints = indexFingerRecognizedPoints.compactMap({ $0 })
-        var middleFingerPoints = middleFingerRecognizedPoints.compactMap({ $0 })
-        
-        indexFingerPoints = indexFingerPoints.filter({ $0.confidence > confidenceLevel })
-        middleFingerPoints = middleFingerPoints.filter({ $0.confidence > confidenceLevel })
-        
-//        let thumbPointConverted = previewLayer.layerPointConverted(fromCaptureDevicePoint: thumbPoint)
-        let indexFingerCGPoints = indexFingerPoints.map({ CGPoint(x: $0.location.x, y: 1 - $0.location.y )})
-        let middleFingerCGPoints = middleFingerPoints.map({ CGPoint(x: $0.location.x, y: 1 - $0.location.y )})
-        
-        let slopeOfIndexFingerPoints = lsm.slope(indexFingerCGPoints)
-        let slopeOfMiddleFingerPoints = lsm.slope(middleFingerCGPoints)
-        
-        print(slopeOfIndexFingerPoints, slopeOfMiddleFingerPoints)
-        if slopeOfIndexFingerPoints.between(-0.5, 0.5) && slopeOfMiddleFingerPoints.between(-0.5, 0.5) {
-            return .play
+    func slope(_ pointA: VNRecognizedPoint?,_ pointB: VNRecognizedPoint?) -> Float? {
+        if let pointA = pointA, let pointB = pointB {
+            if pointA.confidence >= confidenceLevel && pointB.confidence >= confidenceLevel {
+                return lsm.slope([pointA.location, pointB.location])
+            }
         }
-        return .pause
+        return nil
     }
     
 }
